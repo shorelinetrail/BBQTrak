@@ -41,10 +41,9 @@ constexpr uint32_t CONTROL_INTERVAL_MS = 2000;   // PID update every 2s
 constexpr uint32_t TEMP_READ_INTERVAL_MS = 1000;  // Read sensors every 1s
 
 // --- WiFi ---
-// Set your WiFi credentials here or via the web interface on first boot
-constexpr const char* WIFI_SSID = "YOUR_WIFI_SSID";
-constexpr const char* WIFI_PASS = "YOUR_WIFI_PASS";
-constexpr const char* HOSTNAME  = "bbqtrak";
+// Credentials stored in NVS via WiFi provisioning portal
+constexpr const char* HOSTNAME = "bbqtrak";
+constexpr const char* AP_SSID  = "BBQTrak-Setup";
 
 // --- Temperature History ---
 constexpr size_t HISTORY_SIZE = 360;  // 6 minutes at 1s intervals

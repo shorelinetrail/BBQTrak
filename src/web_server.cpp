@@ -1,5 +1,6 @@
 #include "web_server.h"
 #include "smoker_controller.h"
+#include "cook_profiles.h"
 #include <ArduinoJson.h>
 #include <math.h>
 
@@ -37,6 +38,15 @@ void BBQWebServer::setupRoutes() {
     _server.on("/api/history", HTTP_GET,
         [this](AsyncWebServerRequest* r) { handleGetHistory(r); });
 
+    _server.on("/api/profiles", HTTP_GET,
+        [this](AsyncWebServerRequest* r) { handleGetProfiles(r); });
+
+    _server.on("/api/profile", HTTP_GET,
+        [this](AsyncWebServerRequest* r) { handleSetProfile(r); });
+
+    _server.on("/api/autotune", HTTP_GET,
+        [this](AsyncWebServerRequest* r) { handleAutotune(r); });
+
     _server.on("/api/start", HTTP_GET,
         [this](AsyncWebServerRequest* r) {
             _ctrl->start();
@@ -65,6 +75,8 @@ void BBQWebServer::handleGetStatus(AsyncWebServerRequest* request) {
     doc["meat_f"] = isnan(_ctrl->getMeatTempC()) ? 0 : _ctrl->getMeatTempC() * 9.0f / 5.0f + 32.0f;
     doc["target_c"] = _ctrl->getTargetTempC();
     doc["target_f"] = _ctrl->getTargetTempC() * 9.0f / 5.0f + 32.0f;
+    doc["eff_target_c"] = _ctrl->getEffectiveTargetC();
+    doc["eff_target_f"] = _ctrl->getEffectiveTargetC() * 9.0f / 5.0f + 32.0f;
     doc["meat_target_c"] = _ctrl->getMeatTargetC();
     doc["meat_target_f"] = _ctrl->getMeatTargetC() * 9.0f / 5.0f + 32.0f;
     doc["fan"] = _ctrl->getFanSpeed();
@@ -73,9 +85,25 @@ void BBQWebServer::handleGetStatus(AsyncWebServerRequest* request) {
     doc["pit_connected"] = _ctrl->isPitProbeConnected();
     doc["meat_connected"] = _ctrl->isMeatProbeConnected();
     doc["running"] = _ctrl->isRunning();
+    doc["ramping_down"] = _ctrl->isRampingDown();
     doc["kp"] = _ctrl->getPID().getKp();
     doc["ki"] = _ctrl->getPID().getKi();
     doc["kd"] = _ctrl->getPID().getKd();
+    doc["profile"] = _ctrl->getActiveProfile();
+    doc["pid_zone"] = _ctrl->getActivePIDZoneName();
+    doc["autotuning"] = _ctrl->isAutotuning();
+    doc["autotune_done"] = _ctrl->isAutotuneComplete();
+
+    if (_ctrl->isAutotuneComplete()) {
+        auto r = _ctrl->getAutotuneResult();
+        JsonObject at = doc["autotune_result"].to<JsonObject>();
+        at["valid"] = r.valid;
+        at["kp"] = r.kp;
+        at["ki"] = r.ki;
+        at["kd"] = r.kd;
+        at["ku"] = r.ku;
+        at["tu"] = r.tu;
+    }
 
     String response;
     serializeJson(doc, response);
@@ -137,4 +165,45 @@ void BBQWebServer::handleGetHistory(AsyncWebServerRequest* request) {
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);
+}
+
+void BBQWebServer::handleGetProfiles(AsyncWebServerRequest* request) {
+    JsonDocument doc;
+    JsonArray arr = doc.to<JsonArray>();
+
+    for (size_t i = 0; i < COOK_PROFILE_COUNT; i++) {
+        JsonObject p = arr.add<JsonObject>();
+        p["id"] = i;
+        p["name"] = COOK_PROFILES[i].name;
+        p["pit_f"] = COOK_PROFILES[i].pitTargetC * 9.0f / 5.0f + 32.0f;
+        p["meat_f"] = COOK_PROFILES[i].meatTargetC * 9.0f / 5.0f + 32.0f;
+        p["pit_c"] = COOK_PROFILES[i].pitTargetC;
+        p["meat_c"] = COOK_PROFILES[i].meatTargetC;
+    }
+
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+void BBQWebServer::handleSetProfile(AsyncWebServerRequest* request) {
+    if (request->hasParam("id")) {
+        int id = request->getParam("id")->value().toInt();
+        _ctrl->setProfile(id);
+    }
+    request->send(200, "application/json", "{\"ok\":true}");
+}
+
+void BBQWebServer::handleAutotune(AsyncWebServerRequest* request) {
+    if (request->hasParam("action")) {
+        String action = request->getParam("action")->value();
+        if (action == "start") {
+            _ctrl->startAutotune();
+        } else if (action == "cancel") {
+            _ctrl->cancelAutotune();
+        } else if (action == "apply") {
+            _ctrl->applyAutotuneResult();
+        }
+    }
+    request->send(200, "application/json", "{\"ok\":true}");
 }

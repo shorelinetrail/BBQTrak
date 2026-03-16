@@ -5,41 +5,14 @@
 #include "config.h"
 #include "smoker_controller.h"
 #include "web_server.h"
+#include "wifi_provision.h"
 #include "index_html.h"
 
 SmokerController smoker;
 BBQWebServer webServer(80);
+WiFiProvisioner wifiProv;
 
-void connectWiFi() {
-    Serial.printf("Connecting to WiFi: %s\n", WIFI_SSID);
-    WiFi.setHostname(HOSTNAME);
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
-        delay(500);
-        Serial.print(".");
-        attempts++;
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.printf("\nConnected! IP: %s\n", WiFi.localIP().toString().c_str());
-        Serial.printf("Access BBQTrak at: http://%s.local\n", HOSTNAME);
-
-        if (MDNS.begin(HOSTNAME)) {
-            MDNS.addService("http", "tcp", 80);
-            Serial.println("mDNS responder started");
-        }
-    } else {
-        // Fall back to AP mode so user can still access the interface
-        Serial.println("\nWiFi connection failed. Starting AP mode...");
-        WiFi.mode(WIFI_AP);
-        WiFi.softAP("BBQTrak", "bbqtrak123");
-        Serial.printf("AP started. Connect to 'BBQTrak' WiFi, then go to: http://%s\n",
-                       WiFi.softAPIP().toString().c_str());
-    }
-}
+bool portalMode = false;
 
 void setup() {
     Serial.begin(115200);
@@ -52,20 +25,43 @@ void setup() {
     Serial.println();
 
     smoker.begin();
-    connectWiFi();
-    webServer.begin(&smoker);
+
+    // Try connecting with saved WiFi credentials
+    if (wifiProv.connectSaved()) {
+        // Connected - start normal web server
+        Serial.printf("Access BBQTrak at: http://%s.local\n", HOSTNAME);
+        if (MDNS.begin(HOSTNAME)) {
+            MDNS.addService("http", "tcp", 80);
+        }
+        webServer.begin(&smoker);
+    } else {
+        // No saved creds or connection failed - start provisioning portal
+        portalMode = true;
+        wifiProv.startPortal(webServer.getServer());
+        Serial.println("Connect to WiFi 'BBQTrak-Setup' to configure");
+    }
 
     Serial.println();
-    Serial.println("System ready. Use web interface to control smoker.");
+    Serial.println("System ready.");
     Serial.println();
 }
 
 void loop() {
     smoker.update();
 
+    if (portalMode) {
+        wifiProv.update();
+        if (wifiProv.shouldReboot()) {
+            Serial.println("Credentials saved. Rebooting...");
+            delay(1000);
+            ESP.restart();
+        }
+        return;
+    }
+
     // Reconnect WiFi if disconnected (STA mode only)
     static uint32_t lastWiFiCheck = 0;
-    if (WiFi.getMode() == WIFI_STA && millis() - lastWiFiCheck > 30000) {
+    if (millis() - lastWiFiCheck > 30000) {
         lastWiFiCheck = millis();
         if (WiFi.status() != WL_CONNECTED) {
             Serial.println("WiFi disconnected, reconnecting...");
