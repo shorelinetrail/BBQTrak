@@ -69,16 +69,11 @@ void BBQWebServer::setupRoutes() {
 void BBQWebServer::handleGetStatus(AsyncWebServerRequest* request) {
     JsonDocument doc;
 
-    doc["pit_c"] = isnan(_ctrl->getPitTempC()) ? 0 : _ctrl->getPitTempC();
-    doc["meat_c"] = isnan(_ctrl->getMeatTempC()) ? 0 : _ctrl->getMeatTempC();
-    doc["pit_f"] = isnan(_ctrl->getPitTempC()) ? 0 : _ctrl->getPitTempC() * 9.0f / 5.0f + 32.0f;
-    doc["meat_f"] = isnan(_ctrl->getMeatTempC()) ? 0 : _ctrl->getMeatTempC() * 9.0f / 5.0f + 32.0f;
-    doc["target_c"] = _ctrl->getTargetTempC();
-    doc["target_f"] = _ctrl->getTargetTempC() * 9.0f / 5.0f + 32.0f;
-    doc["eff_target_c"] = _ctrl->getEffectiveTargetC();
-    doc["eff_target_f"] = _ctrl->getEffectiveTargetC() * 9.0f / 5.0f + 32.0f;
-    doc["meat_target_c"] = _ctrl->getMeatTargetC();
-    doc["meat_target_f"] = _ctrl->getMeatTargetC() * 9.0f / 5.0f + 32.0f;
+    doc["pit"] = isnan(_ctrl->getPitTempC()) ? 0 : _ctrl->getPitTempC();
+    doc["meat"] = isnan(_ctrl->getMeatTempC()) ? 0 : _ctrl->getMeatTempC();
+    doc["target"] = _ctrl->getTargetTempC();
+    doc["eff_target"] = _ctrl->getEffectiveTargetC();
+    doc["meat_target"] = _ctrl->getMeatTargetC();
     doc["fan"] = _ctrl->getFanSpeed();
     doc["pid_output"] = _ctrl->getPidOutput();
     doc["lid_open"] = _ctrl->isLidOpen();
@@ -175,10 +170,8 @@ void BBQWebServer::handleGetProfiles(AsyncWebServerRequest* request) {
         JsonObject p = arr.add<JsonObject>();
         p["id"] = i;
         p["name"] = COOK_PROFILES[i].name;
-        p["pit_f"] = COOK_PROFILES[i].pitTargetC * 9.0f / 5.0f + 32.0f;
-        p["meat_f"] = COOK_PROFILES[i].meatTargetC * 9.0f / 5.0f + 32.0f;
-        p["pit_c"] = COOK_PROFILES[i].pitTargetC;
-        p["meat_c"] = COOK_PROFILES[i].meatTargetC;
+        p["pit"] = COOK_PROFILES[i].pitTargetC;
+        p["meat"] = COOK_PROFILES[i].meatTargetC;
     }
 
     String response;
