@@ -1,20 +1,19 @@
 #include "smoker_controller.h"
 #include <Arduino.h>
-#include <Wire.h>
+#include <SPI.h>
 #include <math.h>
 
 SmokerController::SmokerController()
-    : _pitProbe(MAX31875_PIT_ADDR),
-      _meatProbe(MAX31875_MEAT_ADDR),
+    : _pitProbe(PIN_CS_PIT),
+      _meatProbe(PIN_CS_MEAT),
       _pid(PID_KP_DEFAULT, PID_KI_DEFAULT, PID_KD_DEFAULT,
            PID_OUTPUT_MIN, PID_OUTPUT_MAX) {}
 
 void SmokerController::begin() {
-    Wire.begin(PIN_SDA, PIN_SCL);
-    Wire.setClock(400000);  // 400 kHz fast mode
+    SPI.begin(PIN_SPI_CLK, PIN_SPI_MISO, -1, -1);  // CLK, MISO, no MOSI, no SS
 
-    _pitProbe.begin(Wire);
-    _meatProbe.begin(Wire);
+    _pitProbe.begin();
+    _meatProbe.begin();
     _fan.begin();
 
     Serial.printf("Pit probe: %s\n",
@@ -35,11 +34,9 @@ void SmokerController::update() {
 
     // Run control loop
     if (now - _lastControl >= CONTROL_INTERVAL_MS) {
-        float dt = (now - _lastControl) / 1000.0f;
         _lastControl = now;
         detectLidOpen();
         runControl();
-        (void)dt;  // dt is computed inside runControl via PID
     }
 
     // Update fan (handles kick-start timing)
@@ -47,19 +44,15 @@ void SmokerController::update() {
 }
 
 void SmokerController::readSensors() {
-    if (_pitProbe.isConnected()) {
-        float reading = _pitProbe.readTempC();
-        if (!isnan(reading)) {
-            _prevPitTemp = _pitTemp;
-            _pitTemp = reading;
-        }
+    float reading = _pitProbe.readTempC();
+    if (!isnan(reading)) {
+        _prevPitTemp = _pitTemp;
+        _pitTemp = reading;
     }
 
-    if (_meatProbe.isConnected()) {
-        float reading = _meatProbe.readTempC();
-        if (!isnan(reading)) {
-            _meatTemp = reading;
-        }
+    reading = _meatProbe.readTempC();
+    if (!isnan(reading)) {
+        _meatTemp = reading;
     }
 }
 

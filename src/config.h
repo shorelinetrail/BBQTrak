@@ -2,24 +2,19 @@
 
 #include <cstdint>
 
-// --- I2C Pins ---
-constexpr uint8_t PIN_SDA = 21;
-constexpr uint8_t PIN_SCL = 22;
+// --- SPI Pins (VSPI) ---
+// CLK and MISO shared between both MAX31855 chips
+constexpr uint8_t PIN_SPI_CLK  = 18;
+constexpr uint8_t PIN_SPI_MISO = 19;  // MAX31855 DO (data out)
+// Separate CS pins for each thermocouple
+constexpr uint8_t PIN_CS_PIT   = 5;   // Pit/chamber K-type thermocouple
+constexpr uint8_t PIN_CS_MEAT  = 17;  // Meat K-type thermocouple
 
 // --- Fan PWM ---
 constexpr uint8_t PIN_FAN_PWM = 25;       // GPIO25 -> 100R -> IRLZ44N gate
 constexpr uint8_t FAN_PWM_CHANNEL = 0;
 constexpr uint32_t FAN_PWM_FREQ = 25000;  // 25 kHz
 constexpr uint8_t FAN_PWM_RESOLUTION = 8; // 0-255
-
-// --- MAX31875 I2C Addresses ---
-// A0-A2 configure address: 0x48 + (A2<<2 | A1<<1 | A0)
-constexpr uint8_t MAX31875_PIT_ADDR  = 0x48;  // Pit/chamber probe
-constexpr uint8_t MAX31875_MEAT_ADDR = 0x49;  // Meat probe
-
-// --- MAX31875 Registers ---
-constexpr uint8_t MAX31875_REG_TEMP   = 0x00;
-constexpr uint8_t MAX31875_REG_CONFIG = 0x01;
 
 // --- PID Defaults ---
 constexpr float PID_KP_DEFAULT = 4.0f;

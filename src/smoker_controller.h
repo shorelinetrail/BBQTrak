@@ -1,6 +1,6 @@
 #pragma once
 
-#include "max31875.h"
+#include "max31855.h"
 #include "fan_control.h"
 #include "pid_controller.h"
 #include "config.h"
@@ -46,8 +46,8 @@ public:
     void stop();
 
 private:
-    MAX31875 _pitProbe;
-    MAX31875 _meatProbe;
+    MAX31855 _pitProbe;
+    MAX31855 _meatProbe;
     FanControl _fan;
     PIDController _pid;
 
