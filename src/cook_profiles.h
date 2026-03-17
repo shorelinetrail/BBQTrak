@@ -17,21 +17,27 @@ enum PIDZone : uint8_t {
     PID_ZONE_COUNT
 };
 
+// Tuned for Landmann Kentucky offset smoker:
+// - Thin uninsulated steel responds fast → lower Ki to prevent integral windup
+// - High heat loss through walls → higher Kd to dampen temp swings
+// - Wider ramp-down margins: thin walls don't retain heat, so carry-over
+//   cooking is less aggressive but the pit cools quickly once fan slows
 constexpr CookProfile COOK_PROFILES[] = {
     //  name                pitC    meatC   kp     ki      kd     rampC
-    { "Brisket",          107.0f, 96.0f,  3.0f,  0.015f, 12.0f, 5.5f  },  // 107°C pit, 96°C meat
-    { "Pulled Pork",      107.0f, 96.0f,  3.0f,  0.015f, 12.0f, 5.5f  },  // 107°C pit, 96°C meat
-    { "Ribs",             121.0f, 93.0f,  4.0f,  0.020f, 10.0f, 3.0f  },  // 121°C pit, 93°C meat
-    { "Chicken",          163.0f, 74.0f,  5.0f,  0.025f, 8.0f,  3.0f  },  // 163°C pit, 74°C meat
-    { "Hot & Fast Brisket", 149.0f, 96.0f, 5.5f, 0.030f, 8.0f,  5.5f },  // 149°C pit, 96°C meat
-    { "Pork Belly",       121.0f, 91.0f,  4.0f,  0.020f, 10.0f, 3.0f  },  // 121°C pit, 91°C meat
-    { "Turkey",           163.0f, 74.0f,  5.0f,  0.025f, 8.0f,  3.0f  },  // 163°C pit, 74°C meat
-    { "Salmon",           107.0f, 63.0f,  3.0f,  0.015f, 12.0f, 2.0f  },  // 107°C pit, 63°C meat
+    { "Brisket",          107.0f, 96.0f,  2.8f,  0.010f, 15.0f, 4.5f  },
+    { "Pulled Pork",      107.0f, 96.0f,  2.8f,  0.010f, 15.0f, 4.5f  },
+    { "Ribs",             121.0f, 93.0f,  3.5f,  0.012f, 14.0f, 3.0f  },
+    { "Chicken",          163.0f, 74.0f,  4.5f,  0.018f, 10.0f, 2.5f  },
+    { "Hot & Fast Brisket", 149.0f, 96.0f, 5.0f, 0.022f, 10.0f, 4.5f },
+    { "Pork Belly",       121.0f, 91.0f,  3.5f,  0.012f, 14.0f, 3.0f  },
+    { "Turkey",           163.0f, 74.0f,  4.5f,  0.018f, 10.0f, 2.5f  },
+    { "Salmon",           107.0f, 63.0f,  2.8f,  0.010f, 15.0f, 2.0f  },
 };
 
 constexpr size_t COOK_PROFILE_COUNT = sizeof(COOK_PROFILES) / sizeof(COOK_PROFILES[0]);
 
 // Multi-zone PID presets (used when no cook profile is active)
+// Tuned for Landmann Kentucky: lower Ki, higher Kd across both zones
 struct PIDZonePreset {
     const char* name;
     float kp, ki, kd;
@@ -40,6 +46,6 @@ struct PIDZonePreset {
 };
 
 constexpr PIDZonePreset PID_ZONE_PRESETS[PID_ZONE_COUNT] = {
-    { "Low & Slow",  3.0f, 0.015f, 12.0f,  0.0f,   135.0f },  // up to 135°C
-    { "Hot & Fast",  5.5f, 0.030f,  8.0f,  135.0f,  999.0f },  // 135°C+
+    { "Low & Slow",  2.8f, 0.010f, 15.0f,  0.0f,   135.0f },  // up to 135°C
+    { "Hot & Fast",  5.0f, 0.022f, 10.0f,  135.0f,  999.0f },  // 135°C+
 };
