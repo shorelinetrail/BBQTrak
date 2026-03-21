@@ -31,8 +31,7 @@ float MAX31855::readInternalC() {
     return internal * 0.0625f;
 }
 
-bool MAX31855::isConnected() {
-    readRaw();
+bool MAX31855::isConnected() const {
     return (_fault == 0);
 }
 

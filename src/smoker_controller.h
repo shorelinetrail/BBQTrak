@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include "max31855.h"
 #include "fan_control.h"
 #include "pid_controller.h"

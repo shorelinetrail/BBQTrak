@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Arduino.h>
 #include <SPI.h>
 #include <cstdint>
 
@@ -17,7 +18,7 @@ public:
     float readInternalC();
 
     // Check if thermocouple is connected (no fault bits set)
-    bool isConnected();
+    bool isConnected() const;
 
     // Get fault code from last read (0 = no fault)
     // Bit 0: Open circuit, Bit 1: Short to GND, Bit 2: Short to VCC
