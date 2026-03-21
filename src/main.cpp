@@ -61,11 +61,30 @@ void loop() {
 
     // Reconnect WiFi if disconnected (STA mode only)
     static uint32_t lastWiFiCheck = 0;
-    if (millis() - lastWiFiCheck > 30000) {
-        lastWiFiCheck = millis();
-        if (WiFi.status() != WL_CONNECTED) {
-            Serial.println("WiFi disconnected, reconnecting...");
+    static uint32_t wifiRetryDelay = 5000;   // Start at 5s, back off to 60s
+    static uint8_t wifiFailCount = 0;
+    uint32_t now = millis();
+
+    if (now - lastWiFiCheck > wifiRetryDelay) {
+        lastWiFiCheck = now;
+        wl_status_t status = WiFi.status();
+        if (status != WL_CONNECTED) {
+            wifiFailCount++;
+            Serial.printf("[WIFI] Disconnected (status=%d, attempt #%d, next retry %lums)\n",
+                          status, wifiFailCount, wifiRetryDelay);
+            WiFi.disconnect();
+            delay(100);
             WiFi.reconnect();
+            // Exponential backoff: 5s -> 10s -> 20s -> 40s -> 60s cap
+            if (wifiRetryDelay < 60000) wifiRetryDelay *= 2;
+            if (wifiRetryDelay > 60000) wifiRetryDelay = 60000;
+        } else {
+            if (wifiFailCount > 0) {
+                Serial.printf("[WIFI] Reconnected after %d attempts (IP: %s, RSSI: %d dBm)\n",
+                              wifiFailCount, WiFi.localIP().toString().c_str(), WiFi.RSSI());
+            }
+            wifiFailCount = 0;
+            wifiRetryDelay = 5000;  // Reset backoff on success
         }
     }
 }

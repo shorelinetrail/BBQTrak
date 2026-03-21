@@ -92,6 +92,7 @@ private:
     uint32_t _lastControl = 0;
     uint32_t _lidOpenUntil = 0;
     float _prevPitTemp = NAN;
+    uint8_t _debugCounter = 0;
 
     // Circular buffer for history
     TempReading _history[HISTORY_SIZE];

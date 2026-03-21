@@ -58,6 +58,17 @@ void SmokerController::readSensors() {
     if (!isnan(reading)) {
         _meatTemp = reading;
     }
+
+    // Periodic debug output every 10 seconds
+    _debugCounter++;
+    if (_debugCounter >= 10) {
+        _debugCounter = 0;
+        Serial.printf("[SENSORS] pit=%.1f°C meat=%.1f°C | pit_fault=%d meat_fault=%d | target=%.1f°C fan=%.0f%% pid=%.1f %s\n",
+                      _pitTemp, _meatTemp,
+                      _pitProbe.getFault(), _meatProbe.getFault(),
+                      _effectiveTarget, _fan.getSpeed(), _pidOutput,
+                      _running ? "RUN" : "STOP");
+    }
 }
 
 void SmokerController::computeRampDown() {

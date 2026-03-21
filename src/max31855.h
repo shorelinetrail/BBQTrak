@@ -28,6 +28,7 @@ private:
     uint8_t _csPin;
     uint8_t _fault = 0;
     uint32_t _lastRaw = 0;
+    uint32_t _consecutiveFaults = 0;
 
     uint32_t readRaw();
 };
