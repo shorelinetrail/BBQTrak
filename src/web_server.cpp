@@ -5,7 +5,7 @@
 #include <math.h>
 
 // Web UI served as a single embedded page
-extern const char INDEX_HTML[] PROGMEM;
+#include "index_html.h"
 
 BBQWebServer::BBQWebServer(uint16_t port) : _server(port) {}
 
