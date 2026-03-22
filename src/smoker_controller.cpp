@@ -161,7 +161,7 @@ void SmokerController::detectLidOpen() {
 
 void SmokerController::recordHistory() {
     uint32_t now = millis();
-    if (now - _lastHistoryWrite < TEMP_READ_INTERVAL_MS) return;
+    if (now - _lastHistoryWrite < HISTORY_INTERVAL_MS) return;
     _lastHistoryWrite = now;
 
     _history[_historyIdx] = {_pitTemp, _meatTemp, now};
