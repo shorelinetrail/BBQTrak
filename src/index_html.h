@@ -180,9 +180,9 @@ body {
 
     <div class="chart-card">
         <div class="chart-duration" id="durationBar">
-            <button class="active" onclick="setDuration(30)">5m</button>
-            <button onclick="setDuration(180)">30m</button>
-            <button onclick="setDuration(360)">1h</button>
+            <button class="active" onclick="setDuration(60)">5m</button>
+            <button onclick="setDuration(360)">30m</button>
+            <button onclick="setDuration(720)">1h</button>
             <button onclick="setDuration(1800)">All</button>
         </div>
         <canvas id="chart"></canvas>
@@ -246,7 +246,7 @@ body {
 
 <script>
 let chartData = { pit: [], meat: [], time: [] };
-let chartDuration = 30;
+let chartDuration = 60;
 let profiles = [];
 let activeProfile = -1;
 
