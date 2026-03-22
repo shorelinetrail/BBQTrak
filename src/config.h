@@ -59,4 +59,4 @@ constexpr const char* HOSTNAME = "bbqtrak";
 constexpr const char* AP_SSID  = "BBQTrak-Setup";
 
 // --- Temperature History ---
-constexpr size_t HISTORY_SIZE = 360;  // 6 minutes at 1s intervals
+constexpr size_t HISTORY_SIZE = 1800;  // 30 minutes at 1s intervals

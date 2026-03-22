@@ -69,6 +69,17 @@ body {
     margin-bottom: 16px; border: 1px solid #0f3460;
 }
 .chart-card canvas { width: 100%; height: 200px; }
+.chart-duration {
+    display: flex; gap: 4px; margin-bottom: 8px;
+}
+.chart-duration button {
+    padding: 4px 10px; border: 1px solid #0f3460; border-radius: 4px;
+    background: #0f3460; color: #7f8c8d; cursor: pointer;
+    font-size: 0.75rem; font-weight: 600; transition: all 0.2s;
+}
+.chart-duration button.active {
+    background: #2980b9; color: #fff; border-color: #2980b9;
+}
 
 .controls {
     background: #16213e; border-radius: 12px; padding: 16px;
@@ -168,6 +179,12 @@ body {
     </div>
 
     <div class="chart-card">
+        <div class="chart-duration" id="durationBar">
+            <button class="active" onclick="setDuration(60)">1m</button>
+            <button onclick="setDuration(300)">5m</button>
+            <button onclick="setDuration(600)">10m</button>
+            <button onclick="setDuration(1800)">30m</button>
+        </div>
         <canvas id="chart"></canvas>
     </div>
 
@@ -229,6 +246,7 @@ body {
 
 <script>
 let chartData = { pit: [], meat: [], time: [] };
+let chartDuration = 300;
 let profiles = [];
 let activeProfile = -1;
 
@@ -332,8 +350,15 @@ function updateStatus() {
     }).catch(() => {});
 }
 
+function setDuration(secs) {
+    chartDuration = secs;
+    document.querySelectorAll('.chart-duration button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    drawChart();
+}
+
 function drawChart() {
-    fetch('/api/history').then(r => r.json()).then(d => {
+    fetch('/api/history?limit=' + chartDuration).then(r => r.json()).then(d => {
         chartData = d; renderChart();
     }).catch(() => {});
 }
@@ -357,7 +382,7 @@ function renderChart() {
         return;
     }
 
-    const pad = { t: 10, r: 10, b: 25, l: 40 };
+    const pad = { t: 20, r: 10, b: 18, l: 40 };
     const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
     const all = chartData.pit.concat(chartData.meat).filter(v => v > 0);
     if (all.length === 0) return;
@@ -385,9 +410,24 @@ function renderChart() {
     drawLine(chartData.pit, '#e74c3c');
     drawLine(chartData.meat, '#f39c12');
 
-    ctx.font = '11px sans-serif';
-    ctx.fillStyle = '#e74c3c'; ctx.fillText('Pit', pad.l + 10, H - 6);
-    ctx.fillStyle = '#f39c12'; ctx.fillText('Meat', pad.l + 50, H - 6);
+    // X-axis time labels
+    ctx.fillStyle = '#7f8c8d'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    let tLen = chartData.time.length;
+    if (tLen >= 2) {
+        let t0 = chartData.time[0], t1 = chartData.time[tLen - 1];
+        let span = t1 - t0;
+        for (let i = 0; i <= 4; i++) {
+            let x = pad.l + (i / 4) * cW;
+            let ago = Math.round(span * (1 - i / 4));
+            let lbl = ago >= 60 ? Math.round(ago / 60) + 'm' : ago + 's';
+            if (i === 4) lbl = 'now';
+            ctx.fillText(i === 4 ? lbl : '-' + lbl, x, H - 2);
+        }
+    }
+
+    ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#e74c3c'; ctx.fillText('Pit', W - pad.r - 70, pad.t + 14);
+    ctx.fillStyle = '#f39c12'; ctx.fillText('Meat', W - pad.r - 35, pad.t + 14);
 }
 
 fetch('/api/profiles').then(r => r.json()).then(p => { profiles = p; renderProfiles(); });

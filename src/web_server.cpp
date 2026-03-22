@@ -148,9 +148,17 @@ void BBQWebServer::handleGetHistory(AsyncWebServerRequest* request) {
     size_t idx = _ctrl->getHistoryIndex();
     const TempReading* history = _ctrl->getHistory();
 
-    // Output oldest-to-newest
+    // Optional limit param to cap how many points to return
+    size_t limit = count;
+    if (request->hasParam("limit")) {
+        size_t reqLimit = request->getParam("limit")->value().toInt();
+        if (reqLimit > 0 && reqLimit < count) limit = reqLimit;
+    }
+
+    // Output oldest-to-newest (only the last 'limit' entries)
+    size_t skip = count - limit;
     size_t start = (count < HISTORY_SIZE) ? 0 : idx;
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = skip; i < count; i++) {
         size_t pos = (start + i) % HISTORY_SIZE;
         pitArr.add(isnan(history[pos].pitC) ? 0 : history[pos].pitC);
         meatArr.add(isnan(history[pos].meatC) ? 0 : history[pos].meatC);
